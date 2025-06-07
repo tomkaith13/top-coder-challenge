@@ -19,4 +19,4 @@
 # echo "TODO: Implement your reimbursement calculation here"
 # echo "Input: $1 days, $2 miles, \$$3 receipts"
 # echo "Output should be a single number (the reimbursement amount)" 
-python3 main.py "$1" "$2" "$3"
+python main.py "$1" "$2" "$3"

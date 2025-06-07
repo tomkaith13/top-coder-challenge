@@ -107,7 +107,7 @@ if __name__ == "__main__":
         receipts = float(sys.argv[3])
         
         result = calculate_reimbursement(days, miles, receipts)
-        print(f"${result:.2f}")
+        print(f"{result:.2f}")
         
     except ValueError as e:
         print(f"Error: {str(e)}")
@@ -115,4 +115,4 @@ if __name__ == "__main__":
 
 # --- Example Usage ---
 # python reimbursement.py 5 200 500.00
-# $689.42 (sample output)
+# 689.42 (sample output)
