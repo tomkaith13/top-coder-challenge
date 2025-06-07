@@ -3,7 +3,7 @@ import sys
 
 def calculate_reimbursement(
     trip_duration_days: int,
-    miles_traveled: int,
+    miles_traveled: float,
     total_receipts_amount: float
 ) -> float:
     """
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     
     try:
         days = int(sys.argv[1])
-        miles = int(sys.argv[2])
+        miles = float(sys.argv[2])
         receipts = float(sys.argv[3])
         
         result = calculate_reimbursement(days, miles, receipts)
