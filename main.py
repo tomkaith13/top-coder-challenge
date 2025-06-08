@@ -95,60 +95,114 @@ import sys
     
 #     return round(final_amount, 2)
 
-def calculate_reimbursement(days, miles, receipts):
+# def calculate_reimbursement(days, miles, receipts):
     # Core parameters from interview analysis
-    BASE_PER_DIEM = 93.45  # Verified against Marcus' Cleveland-Detroit examples
-    MILEAGE_RATES = [(150, 0.55), (math.inf, 0.42)]  # Lisa's tiered structure
-    EFFICIENCY_BONUS = 1.22  # Kevin's 180-220 mpd sweet spot
-    ROUNDING_BUG_BONUS = 0.11  # Lisa's .49/.99 observation
+    # BASE_PER_DIEM = 93.45  # Verified against Marcus' Cleveland-Detroit examples
+    # MILEAGE_RATES = [(150, 0.55), (math.inf, 0.42)]  # Lisa's tiered structure
+    # EFFICIENCY_BONUS = 1.22  # Kevin's 180-220 mpd sweet spot
+    # ROUNDING_BUG_BONUS = 0.11  # Lisa's .49/.99 observation
 
-    # Anti-vacation penalty (Marcus' pattern)
-    if days >= 7 and miles/days < 50:
-        return round(0.85 * (BASE_PER_DIEM * days), 2)
+    # # Anti-vacation penalty (Marcus' pattern)
+    # if days >= 7 and miles/days < 50:
+    #     return round(0.85 * (BASE_PER_DIEM * days), 2)
 
-    # Per diem calculation with 5-day bonus (Lisa's finding)
+    # # Per diem calculation with 5-day bonus (Lisa's finding)
+    # per_diem = BASE_PER_DIEM * days
+    # if days == 5:
+    #     per_diem *= 1.17  # Stronger 5-day bonus from public cases
+
+    # # Mileage tiered calculation 
+    # remaining = miles
+    # mileage = 0
+    # for threshold, rate in MILEAGE_RATES:
+    #     if remaining <= 0:
+    #         break
+    #     apply_miles = min(remaining, threshold)
+    #     mileage += apply_miles * rate
+    #     remaining -= apply_miles
+
+    # # Receipt processing curve (Lisa's optimal spending)
+    # daily_spend = receipts/days if days > 0 else 0
+    # if 75 <= daily_spend <= 115:  # Adjusted from interviews.md
+    #     spend_mult = 1.12
+    # elif daily_spend < 40:  # Penalty for very low spending
+    #     spend_mult = 0.88
+    # else:
+    #     spend_mult = 1.0
+
+    # # Efficiency multiplier (Kevin's research)
+    # mpd = miles/days
+    # efficiency = EFFICIENCY_BONUS if 180 <= mpd <= 220 else 1.0
+
+    # # Base calculation
+    # base = (per_diem + mileage) * spend_mult * efficiency
+
+    # # Randomization seed (Dave's unpredictability)
+    # rand_seed = hash(f"{days}{miles}{receipts:.2f}") % 1000 / 1000
+    # randomization = 0.88 + (rand_seed * 0.08)  # 8-12% variance
+
+    # final = base * randomization
+
+    # # Rounding bug preservation (Lisa's .49/.99 pattern)
+    # cents = final - math.floor(final)
+    # if abs(cents - 0.49) < 0.01 or abs(cents - 0.99) < 0.01:
+    #     final += ROUNDING_BUG_BONUS
+
+    # return round(final, 2)
+
+def calculate_reimbursement(days, miles, receipts):
+    """Reverse-engineered ACME reimbursement calculator with legacy quirks"""
+    
+    # Core parameters from test case analysis
+    BASE_PER_DIEM = 117.50  # Calibrated to public cases
+    MILEAGE_RATES = [(100, 0.62), (200, 0.57), (math.inf, 0.48)]  # Tiered rates
+    
+    # Efficiency sweet spot (Kevin's pattern)
+    mpd = miles / days if days > 0 else 0
+    efficiency = 1.25 if 185 <= mpd <= 215 else 1.0
+    
+    # Per diem with 5-day bonus (Lisa's observation)
     per_diem = BASE_PER_DIEM * days
     if days == 5:
-        per_diem *= 1.17  # Stronger 5-day bonus from public cases
-
-    # Mileage tiered calculation 
+        per_diem *= 1.19  # Stronger 5-day boost
+    
+    # Mileage calculation with legacy tiered rates
     remaining = miles
     mileage = 0
     for threshold, rate in MILEAGE_RATES:
-        if remaining <= 0:
-            break
-        apply_miles = min(remaining, threshold)
-        mileage += apply_miles * rate
-        remaining -= apply_miles
-
-    # Receipt processing curve (Lisa's optimal spending)
-    daily_spend = receipts/days if days > 0 else 0
-    if 75 <= daily_spend <= 115:  # Adjusted from interviews.md
-        spend_mult = 1.12
-    elif daily_spend < 40:  # Penalty for very low spending
-        spend_mult = 0.88
+        apply = min(remaining, threshold)
+        mileage += apply * rate
+        remaining -= apply
+        if remaining <= 0: break
+    
+    # Receipt processing curve (Lisa's rounding bug)
+    daily_spend = receipts / days if days > 0 else 0
+    if 80 <= daily_spend <= 110:
+        spend_mult = 1.18
+    elif daily_spend < 45:
+        spend_mult = 0.93  # Reduced penalty for very low spending
     else:
-        spend_mult = 1.0
-
-    # Efficiency multiplier (Kevin's research)
-    mpd = miles/days
-    efficiency = EFFICIENCY_BONUS if 180 <= mpd <= 220 else 1.0
-
+        spend_mult = 1.02  # Neutral zone
+    
+    # Anti-vacation pattern (Marcus' observation)
+    if days >= 4 and mpd < 55:
+        efficiency *= 0.87
+    
     # Base calculation
     base = (per_diem + mileage) * spend_mult * efficiency
+    
+    # Legacy randomization (Dave's unpredictability)
+    seed = hash(f"{days}{miles}{receipts:.2f}") 
+    rand = 0.88 + (seed % 1000)/1000 * 0.08  # 8-10% variance
+    
+    # Rounding quirk preservation (Lisa's .49/.99 bonus)
+    amount = base * rand
+    cents = round(amount - math.floor(amount), 2)
+    if abs(cents - 0.49) < 0.005 or abs(cents - 0.99) < 0.005:
+        amount += 0.11
 
-    # Randomization seed (Dave's unpredictability)
-    rand_seed = hash(f"{days}{miles}{receipts:.2f}") % 1000 / 1000
-    randomization = 0.88 + (rand_seed * 0.08)  # 8-12% variance
+    return round(amount, 2)
 
-    final = base * randomization
-
-    # Rounding bug preservation (Lisa's .49/.99 pattern)
-    cents = final - math.floor(final)
-    if abs(cents - 0.49) < 0.01 or abs(cents - 0.99) < 0.01:
-        final += ROUNDING_BUG_BONUS
-
-    return round(final, 2)
 # --- Command Line Interface ---
 if __name__ == "__main__":
     if len(sys.argv) != 4:
